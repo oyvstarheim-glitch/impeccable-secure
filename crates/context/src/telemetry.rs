@@ -108,7 +108,9 @@ pub fn opt_out_reason(env: &Env, cwd: &str) -> Option<String> {
             }
         }
     }
-    None
+    // Secure fork: only an explicit user-level opt-in can enable telemetry.
+    let enabled = safe_read(&user).and_then(|t| serde_json::from_str::<Value>(&t).ok()).and_then(|v| v.get("telemetry").and_then(Value::as_bool)) == Some(true);
+    if enabled { None } else { Some("secure default; explicit user opt-in required".into()) }
 }
 
 pub fn telemetry_disabled(env: &Env, cwd: &str) -> bool {
@@ -776,7 +778,7 @@ pub fn run(args: &[String], io: &mut impeccable_common::Io) -> i32 {
             if cmd == "off" {
                 m.insert("telemetry".into(), Value::Bool(false));
             } else {
-                m.remove("telemetry");
+                m.insert("telemetry".into(), Value::Bool(true));
             }
             if let Err(e) = write(&m) {
                 io.err(&format!("telemetry: could not write the user config ({})\n", e));
@@ -1177,13 +1179,13 @@ mod tests {
             }
             e
         };
-        assert_eq!(opt_out_reason(&base(&[]), &cwd), None);
+        assert!(telemetry_disabled(&base(&[]), &cwd));
         for v in ["1", "true", "yes", "anything"] {
             assert!(telemetry_disabled(&base(&[("DO_NOT_TRACK", v)]), &cwd), "{v}");
             assert!(telemetry_disabled(&base(&[("IMPECCABLE_NO_TELEMETRY", v)]), &cwd), "{v}");
         }
         for v in ["", "0", "false", "FALSE", " "] {
-            assert!(!telemetry_disabled(&base(&[("DO_NOT_TRACK", v)]), &cwd), "{v:?}");
+            assert!(telemetry_disabled(&base(&[("DO_NOT_TRACK", v)]), &cwd), "{v:?}");
         }
         std::fs::create_dir_all(format!("{}/.impeccable", home)).unwrap();
         std::fs::write(format!("{}/.impeccable/config.json", home), r#"{"telemetry": false}"#).unwrap();
@@ -1207,7 +1209,7 @@ mod tests {
             let out = String::from_utf8(cap.stdout.borrow().clone()).unwrap();
             (code, out)
         };
-        assert!(call(&["status"]).1.starts_with("telemetry: on."));
+        assert!(call(&["status"]).1.starts_with("telemetry: off"));
         std::fs::create_dir_all(format!("{}/.impeccable", home)).unwrap();
         std::fs::write(format!("{}/.impeccable/config.json", home), r#"{"other": 1}"#).unwrap();
         let (code, out) = call(&["off"]);
@@ -1218,7 +1220,7 @@ mod tests {
         assert!(call(&["status"]).1.starts_with("telemetry: off"));
         assert!(call(&["on"]).1.starts_with("telemetry: on."));
         let cfg: Value = serde_json::from_str(&std::fs::read_to_string(format!("{}/.impeccable/config.json", home)).unwrap()).unwrap();
-        assert_eq!(cfg, json!({ "other": 1 }));
+        assert_eq!(cfg, json!({ "other": 1, "telemetry": true }));
         assert_eq!(call(&["maybe"]).0, 1);
     }
 
