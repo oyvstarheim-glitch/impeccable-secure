@@ -125,6 +125,10 @@ pub fn run_copy_edit_batch_agent(
         _ => choose_copy_edit_agent(env, chat_available),
     };
     let provider = provider.unwrap_or_default();
+    // Secure fork: never launch a headless AI worker from browser-controlled input.
+    if provider == "codex" || provider == "claude" {
+        return Err("Headless AI copy-edit workers are disabled in this security build. Use an active chat session.".to_string());
+    }
     if provider == "mock" {
         let delay_ms = env_number(env, "IMPECCABLE_LIVE_COPY_AGENT_MOCK_DELAY_MS");
         if delay_ms > 0.0 {
@@ -1279,7 +1283,7 @@ pub fn choose_copy_edit_agent(
         .cloned()
         .unwrap_or_default();
     let mode = if raw.is_empty() {
-        "auto".to_string()
+        "chat".to_string()
     } else {
         impeccable_context::util::js_trim(&raw).to_lowercase()
     };
@@ -1294,32 +1298,8 @@ pub fn choose_copy_edit_agent(
                 None
             }
         }
-        "codex" => {
-            if command_exists("codex") {
-                Some("codex".to_string())
-            } else {
-                None
-            }
-        }
-        "claude" => {
-            if command_exists("claude") {
-                Some("claude".to_string())
-            } else {
-                None
-            }
-        }
-        "auto" => {
-            if command_authed("codex") {
-                return Some("codex".to_string());
-            }
-            if command_authed("claude") {
-                return Some("claude".to_string());
-            }
-            if chat() {
-                return Some("chat".to_string());
-            }
-            None
-        }
+        "codex" | "claude" => None,
+        "auto" => if chat() { Some("chat".to_string()) } else { None },
         _ => None,
     }
 }
@@ -1521,7 +1501,8 @@ fn run_codex(
         "exec".into(),
         "--cd".into(),
         cwd.to_string(),
-        "--dangerously-bypass-approvals-and-sandbox".into(),
+        "--sandbox".into(),
+        "read-only".into(),
         "--ephemeral".into(),
         "--output-last-message".into(),
         result_path.to_string(),
@@ -1549,7 +1530,7 @@ fn run_claude(
     let mut args: Vec<String> = vec![
         "--print".into(),
         "--permission-mode".into(),
-        "bypassPermissions".into(),
+        "default".into(),
         "--output-format".into(),
         "json".into(),
     ];
@@ -1702,4 +1683,28 @@ fn run_agent_process(
             .unwrap_or_else(|| "null".to_string()),
     };
     Err(format!("{} exited with {}", command, what))
+}
+
+#[cfg(test)]
+mod secure_worker_tests {
+    use super::*;
+    #[test]
+    fn default_and_auto_never_select_headless_workers() {
+        let mut env = Env::default();
+        assert_eq!(choose_copy_edit_agent(&env, Some(&|| true)).as_deref(), Some("chat"));
+        assert_eq!(choose_copy_edit_agent(&env, Some(&|| false)), None);
+        for mode in ["auto", "codex", "claude", "off"] {
+            env.insert("IMPECCABLE_LIVE_COPY_AGENT".into(), mode.into());
+            let expected = if mode == "auto" { Some("chat") } else { None };
+            assert_eq!(choose_copy_edit_agent(&env, Some(&|| true)).as_deref(), expected);
+        }
+    }
+    #[test]
+    fn explicit_headless_worker_is_rejected_before_execution() {
+        let env = Env::default();
+        for mode in ["codex", "claude"] {
+            let err = run_copy_edit_batch_agent(&json!({}), ".", &env, Some(mode), None, None, None).unwrap_err();
+            assert!(err.contains("Headless AI copy-edit workers are disabled"));
+        }
+    }
 }
