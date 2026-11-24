@@ -18,6 +18,8 @@ hardening snapshots contain 4,943 and 4,944 tracked paths respectively.
 - Removed the obsolete remote and legacy lookup implementations from the npm
   shim. Replaced the upstream download expectations with local-only regression
   tests. Six passed on Linux with Node 24.22.3 in a cleared environment.
+- Moved Windows path validation ahead of the first batch expansion in all 23
+  launchers. Windows launcher smoke tests are defined in the candidate workflow.
 - Updated the Rust regression test for a signed synthetic Pro engine already
   in the cache. The Rust test is pending.
 
@@ -34,7 +36,7 @@ hardening snapshots contain 4,943 and 4,944 tracked paths respectively.
 The Linux execution environment has no Rust toolchain or Windows runtime.
 The reviewed release workflow uses a custom Windows runner and includes release
 publication jobs. Do not use it for Secure verification. The candidate workflow on this branch targets a GitHub-hosted Windows runner.
-It tests the npm shim, builds with the lockfile and checks the engine version
+It tests the npm shim, builds with the lockfile, checks the engine version and exercises the launcher
 before uploading an engine candidate. Its dedicated build-input branch stays
 inactive pending review of its source, dependency, toolchain and runner inputs.
 The candidate has no installation approval.

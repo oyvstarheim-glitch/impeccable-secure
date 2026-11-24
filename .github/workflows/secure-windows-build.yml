@@ -42,6 +42,14 @@ jobs:
           $expected = "impeccable-engine $((Get-Content ENGINE_VERSION -Raw).Trim())"
           $actual = & $engine engine-probe
           if ($LASTEXITCODE -ne 0 -or $actual -cne $expected) { throw 'Unexpected engine version' }
+          $env:IMPECCABLE_SECURE_BIN = (Resolve-Path -LiteralPath $engine).Path
+          $env:IMPECCABLE_SECURE_SHA256 = '0' * 64
+          $launcher = './skill/scripts/impeccable.cmd'
+          & $launcher engine-probe
+          if ($LASTEXITCODE -ne 127) { throw 'Launcher accepted an incorrect digest' }
+          $env:IMPECCABLE_SECURE_SHA256 = (Get-FileHash -LiteralPath $engine -Algorithm SHA256).Hash
+          $actual = & $launcher engine-probe
+          if ($LASTEXITCODE -ne 0 -or $actual -cne $expected) { throw 'Launcher failed to run the verified engine' }
           New-Item -ItemType Directory -Path candidate | Out-Null
           Copy-Item -LiteralPath $engine -Destination candidate/impeccable.exe
           $engineHash = (Get-FileHash -LiteralPath candidate/impeccable.exe -Algorithm SHA256).Hash.ToLowerInvariant()

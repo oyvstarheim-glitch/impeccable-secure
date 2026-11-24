@@ -40,3 +40,17 @@ sign-in, Pro refresh, browser/native messaging, hook installation, Live
 Mode authorization, project JavaScript parser loading and network data
 flows require further review before distribution. No final counts by
 severity are available.
+
+## ISC-003 — Windows launcher parses the engine path before validation
+
+**High impact if the process receives an untrusted engine-path variable.**
+The original Secure batch template expanded the engine path in an existence
+check before validating it in PowerShell. Batch parses that expansion as
+command text. The source template and all 22 tracked copies now treat the
+path as data during the existence and hash checks, and reject quote and
+control characters before the first command-line expansion of the path.
+
+Static comparison confirms the 23 scripts are identical. Windows execution
+and validation of the installed file's permissions and replacement behavior
+are pending. This change does not authenticate a digest supplied by the
+environment or close the interval between verification and execution.
