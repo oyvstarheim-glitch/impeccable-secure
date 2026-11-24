@@ -2493,10 +2493,11 @@ fn handle_manual_edit_commit(
     let requested_mode = env
         .get("IMPECCABLE_LIVE_COPY_AGENT")
         .cloned()
-        .unwrap_or_else(|| "auto".to_string())
+        .unwrap_or_else(|| "chat".to_string())
         .trim()
         .to_ascii_lowercase();
     let chat_active = || lock(shared).chat_agent_likely_active();
+    // In the secure fork, auto never falls back to a headless agent.
     let use_chat = requested_mode == "chat" || (requested_mode == "auto" && chat_active());
     let timeout_ms = {
         let raw = env
