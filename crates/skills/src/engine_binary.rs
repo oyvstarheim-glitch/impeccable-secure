@@ -146,79 +146,13 @@ pub fn ensure_executable_scripts(skill_dir: &str) {
 /// reported on stderr and do not fail the install (the launcher fetches the
 /// binary on first run as a fallback). Also repairs the executable bit on the
 /// launcher and any binaries already present in those dirs.
-pub fn install_engine_binaries(sys: &Sys, io: &mut Io, skill_dirs: &[String]) {
+pub fn install_engine_binaries(_sys: &Sys, io: &mut Io, skill_dirs: &[String]) {
     for skill_dir in skill_dirs {
         ensure_executable_scripts(skill_dir);
     }
-    let Some((os, arch)) = platform_tag() else { return };
-    let base = sys
-        .env
-        .get("IMPECCABLE_DOWNLOAD_BASE")
-        .filter(|v| !v.is_empty())
-        .cloned()
-        .unwrap_or_else(|| DEFAULT_DOWNLOAD_BASE.to_string());
-    let asset = asset_name(os, arch);
-    // One attempt per version, whatever the number of skill dirs.
-    let mut done: HashMap<String, ()> = HashMap::new();
-    for skill_dir in skill_dirs {
-        let version_file = jsp::join(&[skill_dir, "scripts", "VERSION"]);
-        let Ok(raw) = util::read_text(&version_file) else { continue };
-        let version = raw.trim().to_string();
-        if version.is_empty() || done.contains_key(&version) {
-            continue;
-        }
-        // An offline bundle stages its own binary; the launcher runs it.
-        if util::exists(&binary_path(skill_dir, os, arch)) {
-            continue;
-        }
-        done.insert(version.clone(), ());
-        // Resolve the digest before any network traffic: no line, no download.
-        let manifest = jsp::join(&[skill_dir, "scripts", "engine-checksums.txt"]);
-        let Some(expected) = util::read_text(&manifest).ok().and_then(|text| manifest_digest(&text, &version, &asset)) else {
-            io.err(&format!(
-                "Could not download the impeccable engine v{version} for {os}-{arch}: no checksum for engine {version} ({asset}) in {manifest}; refusing the unverified download. The launcher fetches it on first run.\n"
-            ));
-            continue;
-        };
-        let cached = cache_binary_path(sys, &version, os);
-        if cache_is_verified(&cached, &expected) {
-            // A cache restored without modes would pass the stamp yet be
-            // skipped by the POSIX launcher, so put the bit back.
-            let _ = util::set_executable(&cached);
-            continue;
-        }
-        let url = asset_url(&base, &version, os, arch);
-        let bytes = match fetch_binary(&url, &expected) {
-            Ok(bytes) => bytes,
-            Err(e) => {
-                io.err(&format!(
-                    "Could not download the impeccable engine v{version} for {os}-{arch} ({url}): {e}. The launcher fetches it on first run.\n"
-                ));
-                continue;
-            }
-        };
-        // Stage beside the target and rename, so a launcher never runs half a file.
-        let staging = format!("{cached}.part.{}", std::process::id());
-        let written = util::mkdir_p(&jsp::dirname(&cached))
-            .and_then(|_| util::write_bytes(&staging, &bytes))
-            .and_then(|_| util::set_executable(&staging))
-            .and_then(|_| std::fs::rename(&staging, &cached).map_err(|e| e.to_string()))
-            .and_then(|_| util::write_bytes(&format!("{cached}.verified"), format!("{expected} {}\n", bytes.len()).as_bytes()));
-        match written {
-            Ok(()) => io.out(&format!(
-                "Installed impeccable engine v{version} ({os}-{arch}) into: {}\n",
-                sys.format_path_for_display(&cached)
-            )),
-            Err(e) => {
-                let _ = std::fs::remove_file(&staging);
-                io.err(&format!(
-                    "Could not write the impeccable engine v{version} ({os}-{arch}) into {}: {e}\n",
-                    sys.format_path_for_display(&cached)
-                ));
-            }
-        }
-    }
+    io.err("Impeccable Secure: automatic engine installation is disabled; use a separately reviewed local build.\n");
 }
+
 
 #[cfg(test)]
 mod tests {
