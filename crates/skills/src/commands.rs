@@ -51,10 +51,10 @@ pub fn run(args: &[String], io: &mut Io) -> R<()> {
     }
     match sub {
         "" | "help" | "--help" | "-h" => show_help(io),
-        "install" => install(&rest, io),
-        "link" => link(&rest, io),
-        "update" => update(&rest, io),
-        "check" => check(io),
+        "install" | "link" | "update" | "check" => {
+            io.err("Impeccable Secure: installer and updater are disabled pending verification of the local distribution path.\n");
+            Err(Flow::Exit(1))
+        },
         other => {
             io.err(&format!("Unknown skills command: {other}\n"));
             io.err("Run 'impeccable --help' for available commands.\n");
