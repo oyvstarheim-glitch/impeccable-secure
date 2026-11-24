@@ -27,26 +27,9 @@ pub fn run(args: &[String], io: &mut Io, pack: InstalledPack) -> i32 {
     if impeccable_mcp::browser::is_extension_origin(verb) {
         return impeccable_mcp::native_host(args, io);
     }
-    // A small allowlist excludes every hook and internal verb. All I/O beyond
-    // the cheap daily gate belongs to a detached process.
-    if matches!(
-        verb,
-        "context"
-            | "detect"
-            | "doctor"
-            | "whoami"
-            | "agents"
-            | "skills"
-            | "install"
-            | "update"
-            | "check"
-    ) {
-        crate::setup_report::schedule(io);
-        crate::setup_report::schedule_taste(io);
-        if verb == "context" {
-            crate::switch_sync::schedule(io);
-        }
-    }
+    // Secure fork: do not start background reporting, taste refresh, or
+    // switch synchronization as a side effect of unrelated local commands.
+    // Explicit account/network commands remain subject to further review.
     match verb {
         "--help" | "-h" => {
             io.out(impeccable_detect::ROOT_USAGE);
