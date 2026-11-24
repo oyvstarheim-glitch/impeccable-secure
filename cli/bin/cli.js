@@ -94,23 +94,12 @@ async function download() {
   return CACHED;
 }
 async function locate() {
-  const envBin = process.env.IMPECCABLE_BIN;
-  if (exists(envBin)) return envBin;
-  const fromPkg = fromPackage();
-  if (exists(fromPkg)) return fromPkg;
-  if (exists(CACHED)) {
-    // Windows on ARM runs x64 binaries, and the launchers fall back to that asset.
-    const accepted = [expectedDigest(), TARGET === 'windows-arm64' && expectedDigest('impeccable-windows-x64.exe')].filter(Boolean);
-    if (stampValid(accepted)) return CACHED;
-    let digest = '';
-    try { digest = createHash('sha256').update(fs.readFileSync(CACHED)).digest('hex'); } catch { /* unreadable: unverified */ }
-    if (digest && accepted.includes(digest)) {
-      try { fs.writeFileSync(STAMP, `${digest} ${fs.statSync(CACHED).size}\n`); } catch { /* read-only cache: verified this run */ }
-      return CACHED;
-    }
-    process.stderr.write(`impeccable: cannot verify the cached engine ${CACHED} against ${MANIFEST}; downloading engine ${VERSION} again\n`);
-  }
-  return download().catch((err) => { process.stderr.write(`impeccable: ${err.message}\n`); return null; });
+  const bin = process.env.IMPECCABLE_SECURE_BIN;
+  const expected = process.env.IMPECCABLE_SECURE_SHA256;
+  if (!bin || !path.isAbsolute(bin) || !/^[a-fA-F0-9]{64}$/.test(expected || '') || !exists(bin)) return null;
+  const actual = createHash('sha256').update(fs.readFileSync(bin)).digest('hex');
+  if (actual !== expected.toLowerCase()) throw new Error('Approved engine checksum mismatch');
+  return bin;
 }
 
 // `--version` / `-v` is answered by the shim itself: the number users mean
@@ -123,10 +112,7 @@ if (argv[0] === '--version' || argv[0] === '-v') {
 
 const bin = await locate();
 if (!bin) {
-  process.stderr.write(
-    `impeccable: no binary for ${TARGET}. Install ${PLATFORM_PKG}@${VERSION}, set IMPECCABLE_BIN, `
-    + `or download impeccable-${TARGET} v${VERSION} from ${BASE} into ${CACHED}.\n`,
-  );
+  process.stderr.write('Impeccable Secure: approved local engine and SHA-256 required; no download attempted.\n');
   process.exit(127);
 }
 const result = spawnSync(bin, argv, {
