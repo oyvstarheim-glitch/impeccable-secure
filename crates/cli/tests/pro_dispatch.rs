@@ -1,5 +1,4 @@
-//! The open binary hands scans to a verified Pro build, and only scans, and
-//! never from inside a Pro child.
+//! Secure scans use the bundled engine even when a Pro engine is available.
 #![cfg(unix)]
 #[path = "../../account/tests/support/fake.rs"]
 mod fake;
@@ -12,19 +11,18 @@ const PRO: &[u8] = b"#!/bin/sh\necho \"pro-child:$IMPECCABLE_PRO_CHILD $*\"\n";
 
 fn run(
     env: &std::collections::HashMap<String, String>,
-    extra: &[(&str, &str)],
     args: &[&str],
 ) -> (String, String) {
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_impeccable"));
     cmd.args(args)
         .env_clear()
         .envs(env)
-        .envs(extra.iter().copied())
         .stdin(Stdio::null());
     if let Ok(path) = std::env::var("PATH") {
         cmd.env("PATH", path);
     }
     let out = cmd.output().unwrap();
+    assert!(matches!(out.status.code(), Some(0 | 2)), "{out:?}");
     (
         String::from_utf8_lossy(&out.stdout).into_owned(),
         String::from_utf8_lossy(&out.stderr).into_owned(),
@@ -32,8 +30,7 @@ fn run(
 }
 
 #[test]
-fn scans_dispatch_to_the_pro_build_except_where_guarded() {
-    // Catches: a Pro child re-dispatching (a loop), $IMPECCABLE_BIN losing precedence, non-scan verbs dispatching.
+fn scans_keep_using_the_bundled_engine_with_a_verified_pro_build_present() {
     let fake = Fake::start();
     let mut env = fake.env("dispatch");
     login(
@@ -61,28 +58,15 @@ fn scans_dispatch_to_the_pro_build_except_where_guarded() {
     let target = account.home.join("page.html");
     std::fs::write(&target, "<p>hi</p>").unwrap();
     let target = target.to_string_lossy().into_owned();
-    // A hook run and --json output never say "Pro rules are on." and don't use it up.
-    let (_, err) = run(&env, &[], &["detect", "--json", &target]);
-    assert!(!err.contains("Pro rules are on."), "{err}");
-    let (out, err) = run(&env, &[], &["detect", &target]);
-    assert_eq!(out.trim(), format!("pro-child:1 detect {target}"));
-    // The first scan a person runs says it, once per sign-in.
-    assert_eq!(err.matches("Pro rules are on.").count(), 1, "{err}");
-    let (_, err) = run(&env, &[], &["detect", &target]);
-    assert!(!err.contains("Pro rules are on."), "{err}");
-    for (guard, value) in [
-        ("IMPECCABLE_PRO_CHILD", "1"),
-        ("IMPECCABLE_BIN", "/elsewhere/impeccable"),
-        ("IMPECCABLE_PRO", "off"),
+    let target = target.as_str();
+    for args in [
+        vec!["detect", "--json", target],
+        vec!["detect", target],
+        vec![target],
     ] {
-        let (out, _) = run(&env, &[(guard, value)], &["detect", &target]);
-        assert!(!out.contains("pro-child"), "{guard}: {out}");
+        let (out, err) = run(&env, &args);
+        assert!(!out.contains("pro-child") && !err.contains("Pro rules"), "{out}{err}");
     }
-    let (out, _) = run(&env, &[], &["whoami"]);
-    assert!(
-        !out.contains("pro-child") && out.contains("Signed in"),
-        "{out}"
-    );
 }
 
 #[test]
@@ -92,7 +76,7 @@ fn without_a_sign_in_scans_run_the_open_engine_silently() {
     let env = fake.env("no-sign-in");
     let target = std::path::Path::new(&env["IMPECCABLE_HOME"]).join("page.html");
     std::fs::write(&target, "<p>hi</p>").unwrap();
-    let (out, err) = run(&env, &[], &["detect", "--json", &target.to_string_lossy()]);
+    let (out, err) = run(&env, &["detect", "--json", &target.to_string_lossy()]);
     assert!(
         !out.contains("pro-child") && !err.contains("Pro rules"),
         "{out}{err}"

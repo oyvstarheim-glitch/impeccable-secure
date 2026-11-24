@@ -1,105 +1,27 @@
 #!/usr/bin/env node
-// `impeccable` npm shim: finds the platform binary and execs it with argv.
-// Order: $IMPECCABLE_BIN, the @impeccable/cli-<os>-<arch> optional dependency,
-// the version-pinned user cache (~/.impeccable/bin/<version>/), then a
-// download into that cache from the public release channel. The cache and the
-// download are verified against skill/scripts/engine-checksums.txt (shipped in
-// the package); a <binary>.verified stamp holding the manifest digest and the
-// binary's size records that a cached binary passed, until either changes or
-// the binary is newer than the stamp.
+// Run only a local engine supplied alongside its expected SHA-256.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../../package.json');
-const OS = { darwin: 'darwin', linux: 'linux', win32: 'windows' }[process.platform] || process.platform;
-const ARCH = { arm64: 'arm64', x64: 'x64' }[process.arch] || process.arch;
-const TARGET = `${OS}-${ARCH}`;
-const EXE = OS === 'windows' ? 'impeccable.exe' : 'impeccable';
-const PLATFORM_PKG = `@impeccable/cli-${TARGET}`;
-// The engine version travels as the pinned optionalDependency range.
-const VERSION = String(pkg.optionalDependencies?.[PLATFORM_PKG] || Object.values(pkg.optionalDependencies || {})[0] || '').replace(/^[^\d]*/, '');
-const CACHE_ROOT = process.env.IMPECCABLE_HOME || path.join(os.homedir(), '.impeccable');
-const CACHED = path.join(CACHE_ROOT, 'bin', VERSION, EXE);
-const BASE = (process.env.IMPECCABLE_DOWNLOAD_BASE || 'https://github.com/pbakaus/impeccable/releases/download').replace(/\/$/, '');
-const ASSET = `impeccable-${TARGET}${OS === 'windows' ? '.exe' : ''}`;
-const URL = `${BASE}/engine-v${VERSION}/${ASSET}`;
-const MANIFEST = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'skill', 'scripts', 'engine-checksums.txt');
-const STAMP = `${CACHED}.verified`;
 
-function exists(p) { try { return !!p && fs.statSync(p).isFile(); } catch { return false; } }
-// A stamp counts only while it holds an accepted digest and the binary's size,
-// and the binary has not changed since it was written.
-function stampValid(accepted) {
-  try {
-    const [digest, size] = fs.readFileSync(STAMP, 'utf8').trim().split(/\s+/);
-    const bin = fs.statSync(CACHED);
-    return accepted.includes(digest) && size === String(bin.size) && bin.mtimeMs <= fs.statSync(STAMP).mtimeMs;
-  } catch { return false; }
-}
-// The digest MANIFEST records for this version and asset, or '' when none.
-function expectedDigest(wanted = ASSET) {
-  try {
-    for (const line of fs.readFileSync(MANIFEST, 'utf8').split(/\r?\n/)) {
-      const [version, asset, sum] = line.trim().split(/\s+/);
-      if (version === VERSION && asset === wanted) return (sum || '').toLowerCase();
-    }
-  } catch { /* no manifest: nothing verifies */ }
-  return '';
-}
-function fromPackage() {
-  try { return path.join(path.dirname(require.resolve(`${PLATFORM_PKG}/package.json`)), 'bin', EXE); } catch { return null; }
-}
-async function download() {
-  if (!VERSION) return null;
-  // Fail closed, like the skill launcher and `impeccable install`: no digest
-  // on record refuses the download before any request, and nothing is written
-  // until the hash matches, so a refusal leaves the cache dir untouched.
-  const expected = expectedDigest();
-  if (!expected) {
-    throw new Error(`no checksum for engine ${VERSION} (${ASSET}) in ${MANIFEST}; refusing the unverified download`);
-  }
-  const res = await fetch(URL, { redirect: 'follow' });
-  if (!res.ok) {
-    if (res.status >= 500 && res.status < 600) {
-      const host = new globalThis.URL(res.url).hostname;
-      const github = host === 'github.com' || host.endsWith('.github.com')
-        || host === 'githubusercontent.com' || host.endsWith('.githubusercontent.com');
-      const detail = github
-        ? `GitHub's downloads are failing right now (HTTP ${res.status} from ${host}). This is an outage on GitHub's side, not a problem with your setup or the CLI, so updating won't help. Check https://www.githubstatus.com and run the same command again once GitHub has recovered.`
-        : `${host} is failing right now (HTTP ${res.status}), a server error on ${host}'s side. Try again later.`;
-      process.stderr.write(`impeccable: could not download engine ${VERSION}: ${detail}\n`);
-    }
-    return null;
-  }
-  const buf = Buffer.from(await res.arrayBuffer());
-  if (createHash('sha256').update(buf).digest('hex') !== expected) {
-    throw new Error(`checksum mismatch downloading ${URL}`);
-  }
-  fs.mkdirSync(path.dirname(CACHED), { recursive: true });
-  const tmp = `${CACHED}.part.${process.pid}`;
-  try {
-    fs.writeFileSync(tmp, buf, { mode: 0o755 });
-    fs.renameSync(tmp, CACHED);
-  } catch (err) {
-    try { fs.rmSync(tmp, { force: true }); } catch { /* best effort */ }
-    throw err;
-  }
-  try { fs.writeFileSync(STAMP, `${expected} ${buf.length}\n`); } catch { /* next run hashes again */ }
-  return CACHED;
-}
-async function locate() {
+function locate() {
   const bin = process.env.IMPECCABLE_SECURE_BIN;
   const expected = process.env.IMPECCABLE_SECURE_SHA256;
-  if (!bin || !path.isAbsolute(bin) || !/^[a-fA-F0-9]{64}$/.test(expected || '') || !exists(bin)) return null;
-  const actual = createHash('sha256').update(fs.readFileSync(bin)).digest('hex');
-  if (actual !== expected.toLowerCase()) throw new Error('Approved engine checksum mismatch');
-  return bin;
+  if (!bin || !path.isAbsolute(bin) || !/^[a-fA-F0-9]{64}$/.test(expected || '')) {
+    return null;
+  }
+  try {
+    if (!fs.statSync(bin).isFile()) return null;
+    const actual = createHash('sha256').update(fs.readFileSync(bin)).digest('hex');
+    return actual === expected.toLowerCase() ? bin : null;
+  } catch {
+    return null;
+  }
 }
 
 // `--version` / `-v` is answered by the shim itself: the number users mean
@@ -110,7 +32,7 @@ if (argv[0] === '--version' || argv[0] === '-v') {
   process.exit(0);
 }
 
-const bin = await locate();
+const bin = locate();
 if (!bin) {
   process.stderr.write('Impeccable Secure: approved local engine and SHA-256 required; no download attempted.\n');
   process.exit(127);
