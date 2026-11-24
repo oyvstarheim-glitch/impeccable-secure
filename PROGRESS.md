@@ -23,6 +23,9 @@ hardening snapshots contain 4,943 and 4,944 tracked paths respectively.
 - Updated the Rust regression test for a signed synthetic Pro engine already
   in the cache. The Rust test is pending.
 
+- Generated a lockfile CycloneDX SBOM and validated its schema. OSV returned
+  75 advisory IDs across 13 of 419 queried versions. See `DEPENDENCY-AUDIT.md`.
+
 ## Open work
 
 - Review every operative file, including the account, browser, hooks, Live and
