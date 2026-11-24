@@ -43,3 +43,11 @@ It tests the npm shim, builds with the lockfile, checks the engine version and e
 before uploading an engine candidate. Its dedicated build-input branch stays
 inactive pending review of its source, dependency, toolchain and runner inputs.
 The candidate has no installation approval.
+
+## Claude Code smoke test
+
+Validated the local skill directory and plugin inventory with Claude Code
+2.1.331. The synthetic design run was blocked by the isolated client's lack
+of authentication. Corrected the stale first-run download guidance in the
+skill template and its generated copies. See `TEST-REPORT.md` for observed
+results.
