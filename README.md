@@ -1,4 +1,6 @@
-# Impeccable
+# Impeccable Secure — development branch
+
+> **NOT APPROVED FOR INSTALLATION.** This fork is being hardened. The upstream install commands below are historical documentation and must not be run for this fork. No rebuilt engine has been validated. See [SECURITY-HARDENING.md](SECURITY-HARDENING.md).
 
 The design vocabulary for your coding agent. Steer with `polish` and `bolder`, review with `critique` and `audit`, and catch AI slop before it ships.
 
