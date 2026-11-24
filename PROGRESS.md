@@ -33,5 +33,8 @@ hardening snapshots contain 4,943 and 4,944 tracked paths respectively.
 
 The Linux execution environment has no Rust toolchain or Windows runtime.
 The reviewed release workflow uses a custom Windows runner and includes release
-publication jobs. Do not use it for Secure verification. The branch still needs
-a build-only Windows x64 workflow and review of its full build inputs.
+publication jobs. Do not use it for Secure verification. The candidate workflow on this branch targets a GitHub-hosted Windows runner.
+It tests the npm shim, builds with the lockfile and checks the engine version
+before uploading an engine candidate. Its dedicated build-input branch stays
+inactive pending review of its source, dependency, toolchain and runner inputs.
+The candidate has no installation approval.

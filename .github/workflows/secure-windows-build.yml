@@ -1,0 +1,66 @@
+name: Secure Windows candidate build
+
+# Advance this dedicated branch only after reviewing the source and build inputs.
+on:
+  push:
+    branches: [security/windows-build-input]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: windows-2025
+    timeout-minutes: 45
+    env:
+      CARGO_TERM_COLOR: never
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24.22.3'
+          package-manager-cache: false
+      - name: Check source and test the npm shim
+        shell: pwsh
+        run: |
+          if ((git rev-parse HEAD) -ne $env:GITHUB_SHA) { throw 'Unexpected source commit' }
+          node --test tests/cli-shim.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'npm shim tests failed' }
+      - name: Build and smoke-test the locked Windows engine
+        shell: pwsh
+        run: |
+          $target = 'x86_64-pc-windows-msvc'
+          $rust = rustc --version
+          if ($LASTEXITCODE -ne 0) { throw 'Rust toolchain unavailable' }
+          $cargo = cargo --version
+          if ($LASTEXITCODE -ne 0) { throw 'Cargo unavailable' }
+          cargo build --locked --release -p impeccable --target $target
+          if ($LASTEXITCODE -ne 0) { throw 'Windows engine build failed' }
+          $engine = "target/$target/release/impeccable.exe"
+          $expected = "impeccable-engine $((Get-Content ENGINE_VERSION -Raw).Trim())"
+          $actual = & $engine engine-probe
+          if ($LASTEXITCODE -ne 0 -or $actual -cne $expected) { throw 'Unexpected engine version' }
+          New-Item -ItemType Directory -Path candidate | Out-Null
+          Copy-Item -LiteralPath $engine -Destination candidate/impeccable.exe
+          $engineHash = (Get-FileHash -LiteralPath candidate/impeccable.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          $lockHash = (Get-FileHash -LiteralPath Cargo.lock -Algorithm SHA256).Hash.ToLowerInvariant()
+          "${engineHash}  impeccable.exe" | Set-Content -Encoding ascii candidate/CHECKSUMS.sha256
+          [ordered]@{
+            status = 'candidate'
+            commit = $env:GITHUB_SHA
+            repository = $env:GITHUB_REPOSITORY
+            runId = $env:GITHUB_RUN_ID
+            runAttempt = $env:GITHUB_RUN_ATTEMPT
+            target = $target
+            rust = $rust
+            cargo = $cargo
+            cargoLockSha256 = $lockHash
+            engineSha256 = $engineHash
+          } | ConvertTo-Json | Set-Content -Encoding utf8 candidate/provenance.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: impeccable-secure-engine-candidate-windows-x64
+          path: candidate/
+          if-no-files-found: error
