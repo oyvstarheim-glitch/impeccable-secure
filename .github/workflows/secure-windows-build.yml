@@ -38,6 +38,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Cargo unavailable' }
           cargo build --locked --release -p impeccable --target $target
           if ($LASTEXITCODE -ne 0) { throw 'Windows engine build failed' }
+          cargo test --locked -p impeccable --target $target --test detect_html_bytes
+          if ($LASTEXITCODE -ne 0) { throw 'Native local-design detector tests failed' }
           $engine = "target/$target/release/impeccable.exe"
           $expected = "impeccable-engine $((Get-Content ENGINE_VERSION -Raw).Trim())"
           $actual = & $engine engine-probe
@@ -66,6 +68,7 @@ jobs:
             cargo = $cargo
             cargoLockSha256 = $lockHash
             engineSha256 = $engineHash
+            checks = @('npm shim', 'detect_html_bytes', 'engine probe', 'launcher digest refusal and acceptance')
           } | ConvertTo-Json | Set-Content -Encoding utf8 candidate/provenance.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:

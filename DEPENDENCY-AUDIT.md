@@ -33,4 +33,13 @@ included in the Windows package.
 The Cargo advisories list fixes in rustls-webpki 0.103.16, webpki-roots
 1.0.10, and url 2.5.9. The versions exist in the registry index. Resolving the
 URL update also requires form_urlencoded 1.2.3 or later. No lockfile changes
-or Rust compatibility tests have been made.
+were made during that initial check.
+
+## Cargo remediation
+
+Cargo updated the lockfile to rustls-webpki 0.103.16, webpki-roots 1.0.10,
+url 2.5.9 and form_urlencoded 1.2.3. A follow-up OSV query returned no
+matches for these four exact versions. Cargo fetched the locked Linux and
+Windows dependencies and resolved Windows workspace metadata offline. The
+CycloneDX manifest reflects the updated lockfile. Compilation and package
+verification are pending. The npm findings above remain open for assessment.

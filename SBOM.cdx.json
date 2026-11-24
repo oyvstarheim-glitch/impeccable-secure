@@ -6,7 +6,7 @@
     "properties": [
       {
         "name": "impeccable:lockfile:Cargo.lock:sha256",
-        "value": "e9b145beab7d8a9a2c277a2857f44e30913b95e93203061f408c53b7b0c1e33d"
+        "value": "477e4d05046b58a9a20ac24b593976129fe2b56282d8ccf97160a2e6efb1ff85"
       },
       {
         "name": "impeccable:lockfile:bun.lock:sha256",
@@ -498,14 +498,14 @@
     },
     {
       "type": "library",
-      "bom-ref": "pkg:cargo/form_urlencoded@1.2.2",
+      "bom-ref": "pkg:cargo/form_urlencoded@1.2.3",
       "name": "form_urlencoded",
-      "version": "1.2.2",
-      "purl": "pkg:cargo/form_urlencoded@1.2.2",
+      "version": "1.2.3",
+      "purl": "pkg:cargo/form_urlencoded@1.2.3",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
+          "content": "afa489199eaffb1211795df1c6236ce1ad0d41a6fa45250add73e3b02420f06e"
         }
       ]
     },
@@ -1541,14 +1541,14 @@
     },
     {
       "type": "library",
-      "bom-ref": "pkg:cargo/rustls-webpki@0.103.15",
+      "bom-ref": "pkg:cargo/rustls-webpki@0.103.16",
       "name": "rustls-webpki",
-      "version": "0.103.15",
-      "purl": "pkg:cargo/rustls-webpki@0.103.15",
+      "version": "0.103.16",
+      "purl": "pkg:cargo/rustls-webpki@0.103.16",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2"
+          "content": "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281"
         }
       ]
     },
@@ -2126,14 +2126,14 @@
     },
     {
       "type": "library",
-      "bom-ref": "pkg:cargo/url@2.5.8",
+      "bom-ref": "pkg:cargo/url@2.5.9",
       "name": "url",
-      "version": "2.5.8",
-      "purl": "pkg:cargo/url@2.5.8",
+      "version": "2.5.9",
+      "purl": "pkg:cargo/url@2.5.9",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "ff67a8a4397373c3ef660812acab3268222035010ab8680ec4215f38ba3d0eed"
+          "content": "f00cd2407bb42c0ef17be88d4cf020f5cceffd121665bac9b8b9493a369b3b1a"
         }
       ]
     },
@@ -2282,14 +2282,14 @@
     },
     {
       "type": "library",
-      "bom-ref": "pkg:cargo/webpki-roots@1.0.9",
+      "bom-ref": "pkg:cargo/webpki-roots@1.0.10",
       "name": "webpki-roots",
-      "version": "1.0.9",
-      "purl": "pkg:cargo/webpki-roots@1.0.9",
+      "version": "1.0.10",
+      "purl": "pkg:cargo/webpki-roots@1.0.10",
       "hashes": [
         {
           "alg": "SHA-256",
-          "content": "7dcd9d09a39985f5344844e66b0c530a33843579125f23e21e9f0f220850f22a"
+          "content": "1c1c8e20c8a38fc7d65abfe74eb7280e4aa667e8eec8bc84996d2874810748d9"
         }
       ]
     },
@@ -5801,7 +5801,7 @@
       ]
     },
     {
-      "ref": "pkg:cargo/form_urlencoded@1.2.2",
+      "ref": "pkg:cargo/form_urlencoded@1.2.3",
       "dependsOn": [
         "pkg:cargo/percent-encoding@2.3.2"
       ]
@@ -6001,7 +6001,7 @@
         "pkg:cargo/sha2@0.10.9",
         "pkg:cargo/toml_edit@0.22.27",
         "pkg:cargo/ureq@2.12.1",
-        "pkg:cargo/url@2.5.8"
+        "pkg:cargo/url@2.5.9"
       ]
     },
     {
@@ -6017,7 +6017,7 @@
         "pkg:cargo/serde_json@1.0.151",
         "pkg:cargo/sha2@0.10.9",
         "pkg:cargo/ureq@2.12.1",
-        "pkg:cargo/url@2.5.8"
+        "pkg:cargo/url@2.5.9"
       ]
     },
     {
@@ -6044,7 +6044,7 @@
         "pkg:cargo/serde_json@1.0.151",
         "pkg:cargo/sha2@0.10.9",
         "pkg:cargo/tungstenite@0.28.0",
-        "pkg:cargo/url@2.5.8"
+        "pkg:cargo/url@2.5.9"
       ]
     },
     {
@@ -6107,8 +6107,8 @@
         "pkg:cargo/tiny_http@0.12.0",
         "pkg:cargo/unicode-normalization@0.1.25",
         "pkg:cargo/ureq@2.12.1",
-        "pkg:cargo/url@2.5.8",
-        "pkg:cargo/webpki-roots@1.0.9"
+        "pkg:cargo/url@2.5.9",
+        "pkg:cargo/webpki-roots@1.0.10"
       ]
     },
     {
@@ -6220,7 +6220,7 @@
         "pkg:cargo/serde_json@1.0.151",
         "pkg:cargo/sha2@0.10.9",
         "pkg:cargo/ureq@2.12.1",
-        "pkg:cargo/url@2.5.8"
+        "pkg:cargo/url@2.5.9"
       ]
     },
     {
@@ -6237,7 +6237,7 @@
         "pkg:cargo/serde_json@1.0.151",
         "pkg:cargo/sha2@0.10.9",
         "pkg:cargo/ureq@2.12.1",
-        "pkg:cargo/url@2.5.8",
+        "pkg:cargo/url@2.5.9",
         "pkg:cargo/zip@9.3.0"
       ]
     },
@@ -6536,7 +6536,7 @@
         "pkg:cargo/once_cell@1.21.4",
         "pkg:cargo/ring@0.17.14",
         "pkg:cargo/rustls-pki-types@1.15.1",
-        "pkg:cargo/rustls-webpki@0.103.15",
+        "pkg:cargo/rustls-webpki@0.103.16",
         "pkg:cargo/subtle@2.6.1",
         "pkg:cargo/zeroize@1.9.0"
       ]
@@ -6557,7 +6557,7 @@
       ]
     },
     {
-      "ref": "pkg:cargo/rustls-webpki@0.103.15",
+      "ref": "pkg:cargo/rustls-webpki@0.103.16",
       "dependsOn": [
         "pkg:cargo/ring@0.17.14",
         "pkg:cargo/rustls-pki-types@1.15.1",
@@ -6864,14 +6864,14 @@
         "pkg:cargo/serde@1.0.229",
         "pkg:cargo/serde_json@1.0.151",
         "pkg:cargo/socks@0.3.4",
-        "pkg:cargo/url@2.5.8",
+        "pkg:cargo/url@2.5.9",
         "pkg:cargo/webpki-roots@0.26.11"
       ]
     },
     {
-      "ref": "pkg:cargo/url@2.5.8",
+      "ref": "pkg:cargo/url@2.5.9",
       "dependsOn": [
-        "pkg:cargo/form_urlencoded@1.2.2",
+        "pkg:cargo/form_urlencoded@1.2.3",
         "pkg:cargo/idna@1.1.0",
         "pkg:cargo/percent-encoding@2.3.2",
         "pkg:cargo/serde@1.0.229"
@@ -6944,11 +6944,11 @@
     {
       "ref": "pkg:cargo/webpki-roots@0.26.11",
       "dependsOn": [
-        "pkg:cargo/webpki-roots@1.0.9"
+        "pkg:cargo/webpki-roots@1.0.10"
       ]
     },
     {
-      "ref": "pkg:cargo/webpki-roots@1.0.9",
+      "ref": "pkg:cargo/webpki-roots@1.0.10",
       "dependsOn": [
         "pkg:cargo/rustls-pki-types@1.15.1"
       ]

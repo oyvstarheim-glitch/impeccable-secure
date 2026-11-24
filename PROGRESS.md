@@ -51,3 +51,14 @@ Validated the local skill directory and plugin inventory with Claude Code
 of authentication. Corrected the stale first-run download guidance in the
 skill template and its generated copies. See `TEST-REPORT.md` for observed
 results.
+
+The user confirmed the project-local `polish` smoke test on Windows with
+the engine excluded. See `FUNCTIONAL-PARITY.md` for the remaining separation
+between reference-led work and native tools. The Windows candidate workflow
+now also runs the existing native detector's two local-file integration tests.
+
+Cargo resolved and fetched the patched dependency graph for Windows and
+Linux. The updated Rust lockfile and pinned toolchain are recorded in Git.
+The Windows candidate workflow has yet to run. This Linux environment rejected
+both attempts to create a separate process and network namespace. The build
+inputs still need review before execution on the dedicated build branch.
