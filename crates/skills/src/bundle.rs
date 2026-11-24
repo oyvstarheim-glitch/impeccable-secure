@@ -368,7 +368,7 @@ pub fn download_and_extract_bundle(sys: &Sys) -> Result<String, BundleError> {
     if let Some(local) = sys.env.get("IMPECCABLE_BUNDLE_PATH").filter(|v| !v.is_empty()) {
         return copy_or_extract_local_bundle(sys, local).map_err(BundleError::Local);
     }
-    download_remote_bundle(sys, &mut ureq_fetch, bundle_signature::trusted_keys())
+    Err(BundleError::Local("Secure fork: remote skill bundles are disabled. A reviewed local bundle is required.".into()))
 }
 
 /// Lets in-crate command tests stand in for the network: the next
